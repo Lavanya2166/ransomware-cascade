@@ -73,4 +73,6 @@ Random Forest (comparison):
 - Features come from sandbox runs, so this is a behavioural baseline, not a static one.
 - Benign families are similarity clusters, not real families.
 - Only 11 ransomware families, so results vary a lot between seeds.
-- Latency covers model inference only (about 0.4 ms for logistic regression, about 21 ms for Random Forest).
+- Latency covers model inference only (about 2 ms for logistic regression, about 21.5 ms for Random Forest; mean of 5 seeds).
+
+A plain-language explainer of this stage, including why we moved from Random Forest to logistic regression, is in `docs/static_v0/` (rebuild its figures with `python docs/static_v0/make_figures.py`).

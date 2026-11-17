@@ -1,0 +1,38 @@
+{
+  "latency_ms": {
+    "rf": 21.545489600030123,
+    "lr": 1.9502718000001096
+  },
+  "n_features_after_variance_filter_seed0": 19285,
+  "feature_categories": {
+    "STR": 16267,
+    "REG": 6622,
+    "FILES": 4141,
+    "DIR": 2424,
+    "FILES_EXT": 935,
+    "DROP": 346,
+    "API": 232
+  },
+  "top_ransom": [
+    "API:NtTerminateProcess",
+    "REG:WRITTEN:HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2\\{e7136b30-a421-11e5-b597-806d6172696f}\\",
+    "REG:READ:HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2\\CPC\\Volume\\{e7136b30-a421-11e5-b597-806d6172696f}\\",
+    "API:GetSystemTimeAsFileTime",
+    "STR:15066;KERNEL32.dll",
+    "API:VirtualProtectEx",
+    "API:WriteProcessMemory",
+    "API:NtReadFile",
+    "API:NtClose",
+    "API:NtQueryValueKey"
+  ],
+  "top_benign": [
+    "API:NtReadVirtualMemory",
+    "API:NtDuplicateObject",
+    "API:CoInitializeEx",
+    "API:CreateDirectoryW",
+    "API:SetFilePointer",
+    "DIR:ENUMERATED:C:\\Documents and Settings\\MyUser\\Desktop\\test-personal-files\\img\\",
+    "API:LoadResource",
+    "API:SizeofResource"
+  ]
+}

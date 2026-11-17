@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Static Stage v0: How It Works in Plain Language</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.6pt; line-height: 1.5; color: #1f2937; max-width: 820px; margin: auto; }
+  h1 { font-size: 21pt; margin: 0 0 4px 0; color: #111827; }
+  h2 { font-size: 14.5pt; margin: 22px 0 6px 0; color: #1e3a8a; border-bottom: 2px solid #dbeafe; padding-bottom: 3px; page-break-after: avoid; }
+  h3 { font-size: 11.8pt; margin: 14px 0 4px 0; color: #111827; page-break-after: avoid; }
+  p { margin: 5px 0 8px 0; }
+  .sub { color: #4b5563; margin-bottom: 10px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 12px 0; font-size: 9.6pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #d1d5db; padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: #eff6ff; }
+  td.n, th.n { text-align: center; }
+  .rf { color: #b45309; font-weight: 600; }
+  .lr { color: #1d4ed8; font-weight: 600; }
+  .win { background: #dcfce7; font-weight: 600; }
+  .lose { background: #fee2e2; }
+  .box { border-radius: 8px; padding: 9px 13px; margin: 10px 0; page-break-inside: avoid; }
+  .note { background: #eff6ff; border-left: 5px solid #2563eb; }
+  .warn { background: #fff7ed; border-left: 5px solid #f59e0b; }
+  .good { background: #f0fdf4; border-left: 5px solid #16a34a; }
+  .key { background: #f5f3ff; border-left: 5px solid #7c3aed; }
+  figure { margin: 10px 0 14px 0; text-align: center; page-break-inside: avoid; }
+  figure img { max-width: 100%; }
+  figcaption { font-size: 9.3pt; color: #4b5563; margin-top: 3px; text-align: left; }
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 10px 0; page-break-inside: avoid; }
+  .step { border: 2px solid #93c5fd; background: #f8fbff; border-radius: 8px; padding: 6px 12px; width: 78%; text-align: center; font-size: 9.8pt; }
+  .step b { color: #1e3a8a; }
+  .arrow { font-size: 15pt; color: #60a5fa; line-height: 1.1; }
+  .split { display: flex; gap: 6px; margin: 8px 0; page-break-inside: avoid; }
+  .split div { border-radius: 8px; padding: 8px; text-align: center; font-size: 9.6pt; }
+  .dev { flex: 3; background: #dbeafe; border: 2px solid #3b82f6; }
+  .tst { flex: 1; background: #fee2e2; border: 2px solid #ef4444; }
+  .folds { display: flex; gap: 4px; margin-top: 6px; }
+  .folds span { flex: 1; background: #fff; border: 1px dashed #3b82f6; border-radius: 5px; padding: 3px; font-size: 8.8pt; }
+  .folds span.hid { background: #fde68a; border-style: solid; border-color: #d97706; }
+  .timeline { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; page-break-inside: avoid; }
+  .timeline > div { flex: 1; border-radius: 8px; padding: 8px 10px; font-size: 9.5pt; }
+  .t1 { background: #fffbeb; border: 2px solid #f59e0b; }
+  .t2 { background: #fef2f2; border: 2px solid #ef4444; }
+  .t3 { background: #eff6ff; border: 2px solid #2563eb; }
+  .tarrow { flex: 0 0 18px !important; padding: 0 !important; display: flex; align-items: center; justify-content: center; font-size: 18pt; color: #9ca3af; }
+  .kpis { display: flex; gap: 8px; margin: 10px 0; page-break-inside: avoid; }
+  .kpi { flex: 1; border: 1px solid #d1d5db; border-radius: 8px; padding: 7px; text-align: center; }
+  .kpi .big { font-size: 15pt; font-weight: 700; }
+  .kpi .lbl { font-size: 8.8pt; color: #4b5563; }
+  .pb { page-break-before: always; }
+  code { background: #f3f4f6; padding: 0 3px; border-radius: 3px; font-size: 9.2pt; }
+  ul, ol { margin: 4px 0 8px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+  .small { font-size: 9pt; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<h1>Static Stage v0: How It Works in Plain Language</h1>
+<div class="sub">Updated version (17 Nov 2026). Now includes the switch from <span class="rf">Random Forest</span> to <span class="lr">Logistic Regression</span>, the reasons for it, and the results of both. Written so anyone can follow, explain and repeat it.</div>
+
+<div class="box note">
+<b>Change log (for the research paper)</b>
+<table style="margin:6px 0 2px 0">
+<tr><th>Version</th><th>Date / commit</th><th>What changed</th></tr>
+<tr><td>v0.1</td><td>16 Nov 2026, <code>a3fd04d</code></td><td>First detector: <span class="rf">Random Forest</span> (300 trees). Results for 5 seeds saved.</td></tr>
+<tr><td>v0.2</td><td>16 Nov 2026, <code>c449533</code></td><td><span class="lr">Logistic Regression</span> became the main model. The Random Forest is kept as a comparison. Same data, same splits, same seeds.</td></tr>
+</table>
+</div>
+
+<h2>1. The one-line story</h2>
+<p>We built the first stage of the system: a detector that looks at what a file does and says <b>benign</b> or <b>ransomware</b>, with a confidence score. We tested it only on ransomware families it had <b>never seen</b>. Our first model, a Random Forest, did badly on those new families. We switched to Logistic Regression, which made fewer mistakes on new families, gave more honest confidence scores, and was about 11 times faster.</p>
+
+<div class="timeline">
+  <div class="t1"><b>Step 1: Random Forest</b><br>Looked great when families were mixed (97.0%), but dropped to 75.2% on unseen families and raised many false alarms.</div>
+  <div class="tarrow">&#10140;</div>
+  <div class="t2"><b>Step 2: The problem</b><br>New ransomware families are exactly what we need to catch. A detector that only knows old families is not useful.</div>
+  <div class="tarrow">&#10140;</div>
+  <div class="t3"><b>Step 3: Logistic Regression</b><br>84.9% on unseen families (+9.7 points), 41% fewer false alarms, better scores, 11&times; faster.</div>
+</div>
+
+<h2>2. Words we use (simple meanings)</h2>
+<table>
+<tr><th style="width:24%">Word</th><th>What it means here</th></tr>
+<tr><td>Family</td><td>A group of ransomware variants made by the same people and behaving in similar ways (for example, one family = one "brand" of ransomware).</td></tr>
+<tr><td>Unseen family</td><td>A family the model was never trained on. This copies a real zero-day attack.</td></tr>
+<tr><td>Seed</td><td>A number that decides which families are hidden. We repeat everything with 5 seeds (0 to 4), so we do not rely on one lucky choice.</td></tr>
+<tr><td>Accuracy</td><td>Out of all files, the share the model got right.</td></tr>
+<tr><td>Recall (catch rate)</td><td>Out of all real ransomware, the share the model caught. Higher is better.</td></tr>
+<tr><td>False-alarm rate (FPR)</td><td>Out of all safe (benign) files, the share wrongly called ransomware. Lower is better.</td></tr>
+<tr><td>AUC</td><td>How well the scores put ransomware above benign files, from 0.5 (coin toss) to 1.0 (perfect). It does not depend on a cut-off.</td></tr>
+<tr><td>Brier score</td><td>How honest the confidence scores are. 0 is perfect; lower is better.</td></tr>
+<tr><td>OOF score</td><td>"Out-of-fold": a score for a file from a model that never saw that file's family in training.</td></tr>
+<tr><td>mean &plusmn; std</td><td>The average over the 5 seeds, and how much it moves between seeds (std = standard deviation).</td></tr>
+</table>
+
+<h2>3. The data</h2>
+<p>We use the <b>Sgandurra ransomware dataset</b>. Each file was run inside a sandbox (a safe, locked computer) and the dataset records <b>30,967 yes/no behaviours</b>, for example "did it call this Windows function?" or "did it write to this registry key?".</p>
+<div class="kpis">
+  <div class="kpi"><div class="big">1,524</div><div class="lbl">files in total</div></div>
+  <div class="kpi"><div class="big">942</div><div class="lbl">benign files</div></div>
+  <div class="kpi"><div class="big">582</div><div class="lbl">ransomware files</div></div>
+  <div class="kpi"><div class="big">11</div><div class="lbl">ransomware families</div></div>
+  <div class="kpi"><div class="big">30,967</div><div class="lbl">yes/no behaviours per file</div></div>
+</div>
+<table>
+<tr><th>Type of behaviour</th><th class="n">Number of columns</th><th>Example</th></tr>
+<tr><td>Text strings found in the file (STR)</td><td class="n">16,267</td><td>a text such as "KERNEL32.dll"</td></tr>
+<tr><td>Registry actions (REG)</td><td class="n">6,622</td><td>reads or writes a Windows settings key</td></tr>
+<tr><td>File actions (FILES)</td><td class="n">4,141</td><td>opens, writes or deletes a file</td></tr>
+<tr><td>Folder actions (DIR)</td><td class="n">2,424</td><td>lists the contents of a folder</td></tr>
+<tr><td>File-extension actions (FILES_EXT)</td><td class="n">935</td><td>touches files ending in .jpg, .docx ...</td></tr>
+<tr><td>Dropped files (DROP)</td><td class="n">346</td><td>creates a new file of a given type</td></tr>
+<tr><td>Windows function calls (API)</td><td class="n">232</td><td>calls <code>NtTerminateProcess</code></td></tr>
+</table>
+<table>
+<tr><th>Ransomware family</th><th class="n">f01</th><th class="n">f02</th><th class="n">f03</th><th class="n">f04</th><th class="n">f05</th><th class="n">f06</th><th class="n">f07</th><th class="n">f08</th><th class="n">f09</th><th class="n">f10</th><th class="n">f11</th></tr>
+<tr><td>Number of files</td><td class="n">50</td><td class="n">107</td><td class="n">46</td><td class="n">25</td><td class="n">64</td><td class="n">97</td><td class="n">59</td><td class="n">4</td><td class="n">90</td><td class="n">6</td><td class="n">34</td></tr>
+</table>
+<p class="small">Benign files have no family names, so we group similar benign files into 20 groups ourselves (see <code>groups.py</code> below). Almost every cell in the table is 0, so we store only the 1s.</p>
+
+<h2>4. The big picture (pipeline)</h2>
+<div class="flow">
+  <div class="step"><b>Raw data</b>: 1,524 files &times; 30,967 yes/no behaviours</div><div class="arrow">&#8595;</div>
+  <div class="step"><b>prepare_X.py</b>: keep only the 1s (about 190 MB &rarr; about 2 MB in memory)</div><div class="arrow">&#8595;</div>
+  <div class="step"><b>groups.py</b>: sort the 942 benign files into 20 balanced "families"</div><div class="arrow">&#8595;</div>
+  <div class="step" style="border-color:#2563eb;background:#eff6ff"><b>run_static.py</b> (model from <b>model.py</b>: <span class="lr">Logistic Regression</span>, or <span class="rf">Random Forest</span> for comparison)<br>
+  1. hide some families as the final exam &nbsp;&bull;&nbsp; 2. practice exams on the rest (5 parts)<br>
+  3. train the final model and take the final exam &nbsp;&bull;&nbsp; 4. save probabilities and a summary</div><div class="arrow">&#8595;</div>
+  <div class="step"><b>summarize.py</b>: average the 5 seeds into tables</div><div class="arrow">&#8595;</div>
+  <div class="step"><b>artifacts/</b>: predictions handed to the next stage (the trust layer)</div>
+</div>
+
+<h3>What each file does</h3>
+<table>
+<tr><th style="width:20%">File</th><th>In simple words</th></tr>
+<tr><td><code>prepare_X.py</code></td><td>The table has 30,967 columns of 0s and 1s and almost all are 0. We store only the 1s, so it shrinks from about 190 MB to about 2 MB.</td></tr>
+<tr><td><code>groups.py</code></td><td>Ransomware files come with a family name; benign files do not. The first grouping put 804 of 942 benign files in one group, which breaks the "hide whole families" idea, so we re-grouped them into 20 balanced groups by similarity.</td></tr>
+<tr><td><code>model.py</code></td><td>The detector. It first drops columns that are the same for every training file. Then it uses either Logistic Regression (main) or Random Forest (comparison).</td></tr>
+<tr><td><code>run_static.py</code></td><td>Runs the whole experiment for one seed and one model (explained next).</td></tr>
+<tr><td><code>summarize.py</code></td><td>Collects the 5 seeds for each model and writes the mean &plusmn; std tables.</td></tr>
+</table>
+
+<h2 class="pb">5. How the experiment works</h2>
+<p>The key idea: <b>test the model on families it has never seen</b>, just like a brand-new attack in real life.</p>
+<div class="split">
+  <div class="dev"><b>DEV (about 75% of families)</b>: training + practice exams<br>
+    <div class="folds"><span class="hid">part 1 hidden</span><span>part 2</span><span>part 3</span><span>part 4</span><span>part 5</span></div>
+    <span class="small">split into 5 parts by family; each part is hidden once while the other 4 train the model</span></div>
+  <div class="tst"><b>TEST (about 25%)</b><br>final exam only<br><span class="small">3 ransomware families + 5 benign groups, never used in training</span></div>
+</div>
+<ol>
+<li><b>Hide some families as the final exam.</b> For each seed, 3 of the 11 ransomware families and 5 of the 20 benign groups go into the test set (302 to 479 files, depending on the seed). The model never sees them while learning.</li>
+<li><b>Practice exams on the rest.</b> The remaining files (1,045 to 1,222) are split into 5 parts <i>by family</i>. Each part is hidden once, so every file gets a score from a model that never saw its family. These are the <b>OOF scores</b>; the trust layer uses them later.</li>
+<li><b>A "cheating" version for comparison.</b> The same thing with random splits, where files from the same family can be on both sides. This shows how much random splits flatter the model.</li>
+<li><b>Train the final model and take the final exam.</b> Train on all practice data and predict the hidden test families.</li>
+<li><b>Save and check.</b> Save the probabilities and a summary, then run the shared validator (checks that probabilities are valid and add up to 1, no file appears twice, and no family appears in both the practice and the final-exam data).</li>
+<li><b>Repeat for 5 seeds</b>, each hiding different families. Both models used <b>exactly the same files, splits and seeds</b>, so the comparison is fair.</li>
+</ol>
+
+<h2>6. Version 1: Random Forest (what we tried first)</h2>
+<p><b>What it is:</b> 300 decision trees. Each tree asks a chain of yes/no questions ("did it call function X? did it write registry key Y?") and votes benign or ransomware. The share of votes becomes the probability. We used balanced class weights because there are more benign files than ransomware.</p>
+<p><b>Why we started with it:</b> it is a standard, strong baseline, it works on yes/no features without any scaling, and it gives probabilities.</p>
+
+<table>
+<tr><th colspan="5" class="rf">Random Forest results (mean &plusmn; std over 5 seeds)</th></tr>
+<tr><th>Test setting</th><th class="n">Accuracy</th><th class="n">Recall</th><th class="n">False-alarm rate</th><th class="n">AUC</th></tr>
+<tr><td>Random split (families seen, "cheat")</td><td class="n">97.0% &plusmn; 0.7</td><td class="n">97.1% &plusmn; 1.2</td><td class="n">3.2% &plusmn; 1.1</td><td class="n">0.996 &plusmn; 0.002</td></tr>
+<tr><td>Practice exam (unseen families)</td><td class="n">75.2% &plusmn; 9.1</td><td class="n">93.0% &plusmn; 5.1</td><td class="n">36.8% &plusmn; 12.0</td><td class="n">0.843 &plusmn; 0.108</td></tr>
+<tr><td>Final exam (unseen families)</td><td class="n">78.7% &plusmn; 16.7</td><td class="n">95.1% &plusmn; 2.9</td><td class="n">26.8% &plusmn; 24.5</td><td class="n">0.862 &plusmn; 0.160</td></tr>
+</table>
+
+<h3>What went wrong with the Random Forest</h3>
+<ul>
+<li><b>Big drop on new families.</b> Accuracy fell from 97.0% (families seen) to 75.2% (families unseen): a drop of <b>21.8 points</b>. On one seed it was only 60.3%.</li>
+<li><b>Too many false alarms.</b> On the practice exam it flagged about <b>1 in 3 safe files</b> as ransomware (1,225 of 3,355 benign files over the 5 seeds). A detector like that would bury analysts in alerts.</li>
+<li><b>Weak ranking.</b> AUC on unseen families was 0.843, and as low as 0.705 on one seed. The trust layer depends on good scores, so this matters.</li>
+<li><b>Less honest confidence.</b> Brier score 0.183. For example, files it scored close to 100% ransomware were really ransomware only about 56% of the time (see the calibration figure in section 8).</li>
+<li><b>Slow.</b> About 21.5 ms to score one file.</li>
+</ul>
+<div class="box warn"><b>Likely reason (simple version):</b> we have about 1,100 training files but 30,967 behaviours, i.e. far more columns than examples. Trees can find very specific yes/no combinations that identify the <i>known</i> families (memorising). When a new family behaves a bit differently, those exact combinations are missing, and the forest gets confused.</div>
+
+<h2>7. Version 2: Logistic Regression (what we use now)</h2>
+<p><b>What it is (simple version):</b> every behaviour gets a <b>weight</b>. Behaviours typical of ransomware get positive weights, and behaviours typical of normal software get negative weights. For a file, the model <b>adds up</b> the weights of everything the file did and turns the total into a probability between 0 and 1. It is like a points system: lots of suspicious points means "probably ransomware".</p>
+<p><b>Settings:</b> drop columns that never change, then Logistic Regression with L2 regularisation (keeps weights small so no single behaviour dominates), C = 1, balanced class weights, <code>liblinear</code> solver. No other tuning.</p>
+<div class="box good"><b>How we chose it fairly:</b> we compared models using <b>only the practice exams</b> (dev data). The final-exam families were never used to pick the model. Logistic Regression had the best practice-exam scores. According to our notes, Extra Trees and Bernoulli Naive Bayes were also tried at this point and also lost; their numbers were not saved, so we do not report them here.</div>
+<div class="box key"><b>Why it works better here (simple version):</b> instead of memorising exact combinations, it adds up many small pieces of evidence from thousands of behaviours. A new family may not match any known family exactly, but it still does many generally "ransomware-like" things, so its total score still comes out high. The L2 setting also stops it from leaning too hard on any single behaviour. This is a common result when there are many more features than examples.</div>
+
+<h2 class="pb">8. Results: Random Forest vs Logistic Regression</h2>
+<table>
+<tr><th>Test setting / measure</th><th class="n rf">Random Forest (old)</th><th class="n lr">Logistic Regression (new)</th><th class="n">Change</th></tr>
+<tr><th colspan="4">Random split (families seen, "cheat")</th></tr>
+<tr><td>Accuracy</td><td class="n">97.0% &plusmn; 0.7</td><td class="n win">97.7% &plusmn; 0.9</td><td class="n">+0.7 pts</td></tr>
+<tr><td>False-alarm rate</td><td class="n">3.2% &plusmn; 1.1</td><td class="n win">2.0% &plusmn; 0.7</td><td class="n">&minus;1.2 pts</td></tr>
+<tr><td>AUC</td><td class="n">0.996 &plusmn; 0.002</td><td class="n win">0.997 &plusmn; 0.001</td><td class="n">+0.001</td></tr>
+<tr><th colspan="4">Practice exam (unseen families) &mdash; the setting used to choose the model</th></tr>
+<tr><td>Accuracy</td><td class="n">75.2% &plusmn; 9.1</td><td class="n win">84.9% &plusmn; 6.4</td><td class="n"><b>+9.7 pts</b></td></tr>
+<tr><td>Recall (ransomware caught)</td><td class="n">93.0% &plusmn; 5.1</td><td class="n win">94.2% &plusmn; 5.1</td><td class="n">+1.2 pts</td></tr>
+<tr><td>False-alarm rate</td><td class="n">36.8% &plusmn; 12.0</td><td class="n win">21.3% &plusmn; 7.1</td><td class="n"><b>&minus;15.5 pts</b></td></tr>
+<tr><td>AUC</td><td class="n">0.843 &plusmn; 0.108</td><td class="n win">0.928 &plusmn; 0.051</td><td class="n"><b>+0.085</b></td></tr>
+<tr><td>Brier score (lower = more honest)</td><td class="n">0.183 &plusmn; 0.063</td><td class="n win">0.125 &plusmn; 0.053</td><td class="n">&minus;0.058</td></tr>
+<tr><th colspan="4">Final exam (unseen test families)</th></tr>
+<tr><td>Accuracy</td><td class="n">78.7% &plusmn; 16.7</td><td class="n win">82.1% &plusmn; 14.6</td><td class="n">+3.4 pts</td></tr>
+<tr><td>Recall (ransomware caught)</td><td class="n win">95.1% &plusmn; 2.9</td><td class="n lose">92.7% &plusmn; 5.3</td><td class="n">&minus;2.4 pts</td></tr>
+<tr><td>False-alarm rate</td><td class="n">26.8% &plusmn; 24.5</td><td class="n win">21.1% &plusmn; 22.9</td><td class="n">&minus;5.7 pts</td></tr>
+<tr><td>AUC</td><td class="n">0.862 &plusmn; 0.160</td><td class="n win">0.935 &plusmn; 0.083</td><td class="n">+0.073</td></tr>
+<tr><td>Brier score</td><td class="n">0.188 &plusmn; 0.142</td><td class="n win">0.150 &plusmn; 0.140</td><td class="n">&minus;0.038</td></tr>
+<tr><th colspan="4">Speed</th></tr>
+<tr><td>Time to score one file (model only)</td><td class="n">21.5 ms</td><td class="n win">1.95 ms</td><td class="n">about 11&times; faster</td></tr>
+</table>
+<p class="small">Green = better. "pts" = percentage points. All numbers were recomputed directly from the saved prediction files and match the saved summaries exactly.</p>
+
+<figure><img src="figures/fig_accuracy_by_setting.png"><figcaption><b>Figure 1.</b> Both models look excellent when families are mixed (left). On unseen families (middle and right) both drop, but Logistic Regression drops much less. The dots show that results move a lot between seeds.</figcaption></figure>
+
+<div class="kpis">
+  <div class="kpi"><div class="big" style="color:#b45309">21.8 pts</div><div class="lbl">Random Forest drop from seen to unseen families</div></div>
+  <div class="kpi"><div class="big" style="color:#1d4ed8">12.8 pts</div><div class="lbl">Logistic Regression drop from seen to unseen families</div></div>
+  <div class="kpi"><div class="big" style="color:#16a34a">506</div><div class="lbl">fewer false alarms on the practice exam (1,225 &rarr; 719)</div></div>
+  <div class="kpi"><div class="big" style="color:#16a34a">5 of 5</div><div class="lbl">seeds where LR wins on the practice exam</div></div>
+</div>
+
+<h3>Seed by seed</h3>
+<table>
+<tr><th rowspan="2">Seed</th><th colspan="3" class="n">Practice exam accuracy</th><th colspan="3" class="n">Final exam accuracy</th><th colspan="2" class="n">Final exam AUC</th></tr>
+<tr><th class="n rf">RF</th><th class="n lr">LR</th><th class="n">Change</th><th class="n rf">RF</th><th class="n lr">LR</th><th class="n">Change</th><th class="n rf">RF</th><th class="n lr">LR</th></tr>
+<tr><td>0</td><td class="n">84.0%</td><td class="n win">91.1%</td><td class="n">+7.1</td><td class="n">64.7%</td><td class="n win">66.7%</td><td class="n">+2.0</td><td class="n">0.759</td><td class="n win">0.912</td></tr>
+<tr><td>1</td><td class="n">73.8%</td><td class="n win">82.3%</td><td class="n">+8.4</td><td class="n">70.5%</td><td class="n win">88.6%</td><td class="n">+18.1</td><td class="n">0.945</td><td class="n win">0.973</td></tr>
+<tr><td>2</td><td class="n">79.3%</td><td class="n win">91.2%</td><td class="n">+11.9</td><td class="n">64.7%</td><td class="n win">66.1%</td><td class="n">+1.4</td><td class="n">0.632</td><td class="n win">0.799</td></tr>
+<tr><td>3</td><td class="n">78.7%</td><td class="n win">83.7%</td><td class="n">+5.0</td><td class="n">95.4%</td><td class="n win">95.7%</td><td class="n">+0.3</td><td class="n">0.989</td><td class="n win">0.998</td></tr>
+<tr><td>4</td><td class="n">60.3%</td><td class="n win">76.1%</td><td class="n">+15.8</td><td class="n win">98.1%</td><td class="n lose">93.5%</td><td class="n">&minus;4.6</td><td class="n">0.986</td><td class="n win">0.993</td></tr>
+<tr><th>Wins</th><td colspan="3" class="n"><b>LR 5 of 5</b></td><td colspan="3" class="n"><b>LR 4 of 5</b></td><td colspan="2" class="n"><b>LR 5 of 5</b></td></tr>
+</table>
+<p class="small">Final-exam test families per seed: seed 0 = f03, f04, f08; seed 1 = f01, f03, f10; seed 2 = f04, f06, f11; seed 3 = f03, f04, f06; seed 4 = f02, f03, f04 (plus 5 benign groups each). Seeds 0 and 2 are hard for both models because many benign test files look suspicious (about 40% to 53% false alarms for both).</p>
+
+<figure><img src="figures/fig_per_seed_practice.png"><figcaption><b>Figure 2.</b> Practice exam on unseen families, seed by seed. Blue (LR) is better than orange (RF) on every seed for accuracy, false alarms and AUC.</figcaption></figure>
+
+<figure><img src="figures/fig_confusion.png" style="max-width:88%"><figcaption><b>Figure 3.</b> Every prediction from all 5 seeds added together. Top row: practice exam (5,586 predictions). Bottom row: final exam (2,034 predictions). LR mainly wins by raising far fewer false alarms (1,225 &rarr; 719 on practice; 408 &rarr; 326 on final). On the final exam it missed slightly more ransomware (35 &rarr; 53).</figcaption></figure>
+
+<figure><img src="figures/fig_roc.png"><figcaption><b>Figure 4.</b> ROC curves (all seeds together). A curve closer to the top-left corner is better: it catches more ransomware for the same number of false alarms. The blue curve is above the orange one in both settings.</figcaption></figure>
+
+<div style="display:flex;gap:10px;align-items:flex-start;page-break-inside:avoid">
+<figure style="flex:1"><img src="figures/fig_calibration.png"><figcaption><b>Figure 5.</b> If a model says "70% ransomware", about 70% of those files should really be ransomware (dotted line). The Random Forest's most confident group (near 100%) was right only about 56% of the time. LR is closer overall (Brier 0.125 vs 0.183), but it is still not perfect.</figcaption></figure>
+<figure style="flex:1.15"><img src="figures/fig_score_hist.png"><figcaption><b>Figure 6.</b> Scores on the practice exam. Benign files (green) should sit on the left. The Random Forest spreads many benign files across the middle and right; LR pushes more of them to the left.</figcaption></figure>
+</div>
+
+<figure><img src="figures/fig_latency.png" style="max-width:70%"><figcaption><b>Figure 7.</b> Time to score one file (model only, not including running the sandbox). LR is about 11&times; faster.</figcaption></figure>
+
+<figure><img src="figures/fig_top_features.png" style="max-width:85%"><figcaption><b>Figure 8.</b> A bonus of Logistic Regression: we can read its weights and see what it relies on (here, the model trained on seed 0's dev data). Red behaviours push towards ransomware (e.g. ending processes, writing into other processes' memory, changing memory protection). Green push towards benign. Weights show what the model uses, not proof of cause, and some items (like specific registry keys) may be quirks of the sandbox.</figcaption></figure>
+
+<h2>9. Where the Random Forest was still better (being honest)</h2>
+<ul>
+<li><b>Catching ransomware on the final exam:</b> RF caught 95.1% vs LR 92.7%. Over all 5 seeds, RF missed 35 ransomware files and LR missed 53. LR's gain comes mostly from far fewer false alarms.</li>
+<li><b>Seed 4 final exam:</b> RF scored 98.1% and LR 93.5%.</li>
+<li><b>Both are over-confident when wrong.</b> 66% of LR's final-exam mistakes were made with 90% or more confidence (RF: 53%). This is exactly why we need the next stage (the trust layer): we cannot simply believe a confident answer on a new family.</li>
+<li><b>Results swing a lot between seeds</b> (final-exam accuracy 66% to 96% for LR, 65% to 98% for RF), because there are only 11 ransomware families. With only 5 seeds, "5 out of 5 wins" is strong evidence but not a formal proof (a simple sign test gives p &asymp; 0.06).</li>
+</ul>
+
+<h2>10. Conclusion</h2>
+<div class="box good">
+<ol style="margin:0">
+<li><b>Random splits hide the real problem.</b> Both models score about 97% when families are mixed, but much lower on unseen families. Testing on unseen families is the honest way to measure a ransomware detector.</li>
+<li><b>Logistic Regression is the better first stage.</b> On unseen families it is more accurate (84.9% vs 75.2% on practice; 82.1% vs 78.7% on final), raises fewer false alarms, ranks files better (AUC 0.928 vs 0.843; 0.935 vs 0.862), gives more honest confidence scores, is 11&times; faster, and its weights can be read.</li>
+<li><b>It is still not good enough on its own.</b> It is still wrong about 15% of the time on new families and is often confident when wrong. So we save its confidence scores and let the trust layer decide which answers to believe and which files to send for a slower, deeper check.</li>
+</ol>
+</div>
+
+<h2>11. The 30-second version (to say out loud)</h2>
+<div class="box key">"We built a ransomware detector and tested it on ransomware families it had never seen, to mimic brand-new attacks. Our first model, a Random Forest, scored 97% when families were mixed but only 75% on new families, and it flagged about a third of safe files. We switched to Logistic Regression, which simply adds up evidence from all behaviours. On new families it scored 85%, cut false alarms by about 40%, gave better confidence scores, and was 11 times faster. It still makes confident mistakes on new families, so the next stage, the trust layer, decides when to believe it."</div>
+
+<h2>12. Questions the teacher may ask</h2>
+<p><b>Why did you start with a Random Forest?</b> It is a standard, strong baseline for yes/no features, needs no scaling, and gives probabilities.</p>
+<p><b>Why did you change?</b> On unseen families it lost 21.8 accuracy points, flagged about 1 in 3 safe files, and its confidence scores were less honest. Logistic Regression was better on every seed on the practice exams.</p>
+<p><b>Did you choose Logistic Regression by looking at the test results?</b> No. We chose it using only the practice exams (dev data). The final-exam families were not used to choose the model.</p>
+<p><b>Isn't Logistic Regression too simple?</b> Simple helps here. We have about 1,100 training files and 30,967 behaviours. A simple model that adds up evidence generalises better to new families than a complex one that memorises the known ones.</p>
+<p><b>Was anything worse?</b> Yes: on the final exam it caught slightly fewer ransomware files (92.7% vs 95.1%). Overall it made fewer mistakes because it raised far fewer false alarms.</p>
+<p><b>Why hide whole families?</b> A real zero-day attack is a family the model has never seen. Random splits hide that problem and give inflated scores.</p>
+<p><b>Why save probabilities instead of just "ransomware / benign"?</b> The trust layer needs a confidence score (for example, "92% ransomware") to decide which answers to trust and which files to send to the slower sandbox check.</p>
+<p><b>Why are the numbers so different between seeds?</b> There are only 11 ransomware families, and some families are much easier than others. That is why we report the average and spread over 5 seeds.</p>
+
+<h2>13. Honest caveats</h2>
+<ul>
+<li>The features come from running files in a sandbox, so they describe <b>behaviour</b>. The name "static" refers to this being the first, fixed stage of the cascade.</li>
+<li>Benign "families" are similarity groups we made, not real families.</li>
+<li>Only 11 ransomware families (two have just 4 and 6 files), so results change a lot between seeds.</li>
+<li>The timing (21.5 ms vs 1.95 ms) covers the model only, not the time to run the sandbox.</li>
+<li>Extra Trees and Naive Bayes were also tried during model choice, but their numbers were not saved.</li>
+</ul>
+
+<h2>14. Suggested text for the research paper</h2>
+<div class="box note small" style="font-size:9.6pt;color:#1f2937">
+<p><b>Methods.</b> The static stage is a binary classifier trained on the Sgandurra dataset (1,524 samples; 942 benign, 582 ransomware from 11 families; 30,967 binary behavioural features). Benign samples were clustered into 20 pseudo-families (k-means on a 50-component truncated SVD). For each of five seeds, 25% of families (3 ransomware, 5 benign) were held out as a test set; out-of-fold scores on the development set were produced with 5-fold family-grouped cross-validation (StratifiedGroupKFold). A random (non-grouped) 5-fold CV was run as an ablation. We first used a Random Forest (300 trees, balanced class weights). Based on family-grouped out-of-fold performance on the development data only, we replaced it with an L2-regularised logistic regression (C = 1, balanced class weights) preceded by a zero-variance filter; the Random Forest is retained as a comparison.</p>
+<p><b>Results.</b> Under random CV both models reached about 97% accuracy (RF 0.970 &plusmn; 0.007; LR 0.977 &plusmn; 0.009). On unseen families, the Random Forest dropped to 0.752 &plusmn; 0.091 accuracy (FPR 0.368, AUC 0.843) in grouped CV, whereas logistic regression reached 0.849 &plusmn; 0.064 (FPR 0.213, AUC 0.928, Brier 0.125 vs 0.183), winning on all five seeds. On held-out test families logistic regression achieved 0.821 &plusmn; 0.146 accuracy and AUC 0.935 &plusmn; 0.083 versus 0.787 &plusmn; 0.167 and 0.862 &plusmn; 0.160 for the Random Forest, at the cost of slightly lower recall (0.927 vs 0.951). Inference took 1.95 ms vs 21.5 ms per sample. The gap between random and family-wise evaluation, and the high confidence of many errors, motivate the downstream trust layer.</p>
+</div>
+
+<h2>15. How to repeat it</h2>
+<p>From the repo root with the virtual environment active:</p>
+<ol class="small" style="font-size:9.6pt">
+<li><code>python -m common.build_master</code> &rarr; builds <code>data/master.parquet</code></li>
+<li><code>python -m static.prepare_X</code> &rarr; builds <code>data/X_sparse.npz</code></li>
+<li><code>python -m static.run_static --seed 0</code> (Logistic Regression), repeat for seeds 1 to 4</li>
+<li><code>python -m static.run_static --seed 0 --model rf</code> (Random Forest comparison), repeat for seeds 1 to 4</li>
+<li><code>python -m static.summarize</code> &rarr; <code>results/static_summary.md</code></li>
+<li><code>python docs/static_v0/make_figures.py</code> &rarr; all figures and per-seed numbers in this document</li>
+</ol>
+<p class="small">The old Random Forest outputs are also kept in <code>old random forest results/</code>; they are byte-for-byte identical to <code>artifacts/preds_static_rf_seed*.parquet</code>.</p>
+
+</body>
+</html>
