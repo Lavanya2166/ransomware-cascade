@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Summary: Trust-Calibrated Cascading Architectures for Zero-Day Ransomware Detection</title>
+<style>
+  @page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.2pt; line-height: 1.46; color: #1f2937; max-width: 840px; margin: auto; }
+  h1 { font-size: 18.5pt; margin: 0 0 4px 0; color: #0f172a; line-height: 1.25; }
+  h2 { font-size: 13.8pt; margin: 18px 0 6px 0; color: #1e3a8a; border-bottom: 2px solid #bfdbfe; padding-bottom: 3px; page-break-after: avoid; }
+  h3 { font-size: 11.2pt; margin: 12px 0 4px 0; color: #111827; page-break-after: avoid; }
+  p { margin: 4px 0 7px 0; }
+  .sub { color: #475569; font-size: 9.8pt; margin-bottom: 10px; }
+  table { border-collapse: collapse; width: 100%; margin: 7px 0 11px 0; font-size: 9.1pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: left; vertical-align: top; }
+  th { background: #eff6ff; color: #1e3a8a; }
+  td.n, th.n { text-align: center; }
+  .rf { color: #b45309; font-weight: 600; }
+  .lr { color: #1d4ed8; font-weight: 600; }
+  .win { background: #dcfce7; font-weight: 600; }
+  .lose { background: #fee2e2; }
+  .box { border-radius: 8px; padding: 8px 12px; margin: 8px 0; page-break-inside: avoid; }
+  .note { background: #eff6ff; border-left: 5px solid #2563eb; }
+  .warn { background: #fff7ed; border-left: 5px solid #f59e0b; }
+  .good { background: #f0fdf4; border-left: 5px solid #16a34a; }
+  .key { background: #f5f3ff; border-left: 5px solid #7c3aed; }
+  figure { margin: 8px 0 12px 0; text-align: center; page-break-inside: avoid; }
+  figure img { max-width: 100%; }
+  figcaption { font-size: 8.9pt; color: #475569; margin-top: 3px; text-align: left; }
+  .kpis { display: flex; gap: 7px; margin: 8px 0; page-break-inside: avoid; }
+  .kpi { flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px; text-align: center; background: #f8fafc; }
+  .kpi .big { font-size: 14pt; font-weight: 700; }
+  .kpi .lbl { font-size: 8.4pt; color: #475569; }
+  .arch { border: 2px solid #93c5fd; border-radius: 10px; background: #f8fbff; padding: 10px 12px; margin: 10px 0; page-break-inside: avoid; }
+  .arch-row { display: flex; gap: 8px; align-items: stretch; margin: 6px 0; }
+  .arch-box { flex: 1; border-radius: 7px; padding: 7px 9px; font-size: 9pt; border: 1.5px solid #cbd5e1; background: #ffffff; }
+  .arch-box b { color: #1e3a8a; }
+  .arch-arrow { text-align: center; font-size: 13pt; color: #2563eb; line-height: 1.05; margin: 2px 0; font-weight: bold; }
+  .pb { page-break-before: always; }
+  code { background: #f1f5f9; padding: 0 3px; border-radius: 3px; font-size: 8.9pt; }
+  ul, ol { margin: 4px 0 8px 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  .small { font-size: 8.8pt; color: #475569; }
+  .math { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; font-family: "Cambria Math", "Times New Roman", serif; font-size: 10.2pt; text-align: center; margin: 6px 0; page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<h1>Trust-Calibrated Cascading Architectures for Zero-Day Ransomware Detection Under Concept Drift and Adversarial Evasion</h1>
+<div class="sub">Complete Repository &amp; Research Summary Document (v0 Demo Milestone &bull; Updated 17 Nov 2026)<br>
+<b>Team:</b> Saisha Bhasin (Stage 1: Data &amp; Base Classifier, <code>static/</code>) &amp; Lavanya Manocha (Stage 2: Conformal Trust Router, <code>trust/</code>)</div>
+
+<div class="box key">
+<b>The 30-Second Executive Summary (What to Tell the Professor)</b><br>
+Fast ransomware detectors look nearly perfect (~97% accuracy) when tested on known ransomware families, but drop sharply (to ~75%&ndash;85%) when hit by <b>brand-new, unseen ransomware families</b> (zero-day family shift) &mdash; while still giving 90%+ confident wrong answers. Running a full dynamic sandbox on every file is too slow (~9.1 seconds per file). We solve this by placing a <b>Mondrian Conformal Trust Router</b> after a fast <b>Logistic Regression</b> Stage-1 classifier (1.95 ms/file), calibrated strictly on <b>out-of-fold unseen-family predictions</b>. At our target 5% ransomware risk budget (&alpha;<sub>ransom</sub> = 0.05), the router keeps <b>96.3%</b> of unseen-family ransomware covered (only <b>3.7%</b> silent misses), escalates only <b>13.0%</b> of files to slow dynamic analysis, cuts average inspection time from <b>9.10 s to 1.18 s per file (7.7&times; faster)</b>, and raises error-detection AUROC to <b>0.837</b>.
+</div>
+
+<h2>1. Problem Statement &amp; Research Motivation</h2>
+
+<h3>1.1 The Speed&ndash;Accuracy Dilemma in Ransomware Detection</h3>
+<p>Modern endpoint defences face an unavoidable trade-off between two types of analysis:</p>
+<ul>
+  <li><b>Fast Stage-1 Detection (~2 ms to 22 ms inference):</b> Lightweight classifiers are fast enough to check every incoming file immediately, but when a brand-new ransomware family appears (<b>zero-day family shift / concept drift</b>) or an attacker alters superficial features (<b>adversarial evasion</b>), their accuracy drops sharply.</li>
+  <li><b>Slow Stage-2 Dynamic Sandbox Analysis (~9.1 seconds per file, as reported in RansomTrack):</b> Executing a file inside an instrumented sandbox and monitoring its runtime behaviour is much harder to fool, but running a 9.1-second sandbox on 100% of files is far too slow and expensive at scale.</li>
+</ul>
+
+<h3>1.2 The Gap in Existing Literature (ZRS, FeSA, TRANSCENDENT)</h3>
+<ul>
+  <li><b>Standard classifiers do not know when they are wrong:</b> On unseen families, our Stage-1 models made <b>53% to 66% of their test-set mistakes with &ge;90% predicted confidence</b>.</li>
+  <li><b>Standard uncertainty heuristics (Max-Softmax, Shannon Entropy) have no risk guarantee:</b> They rank files by raw probability, which is uncalibrated under family shift and treats a missed ransomware attack (catastrophic) the same as a benign false alarm.</li>
+  <li><b>Naive conformal calibration (TRANSCENDENT-style random splits) fails under family shift:</b> If the trust router is calibrated on random splits where the same ransomware family appears in both training and calibration, calibration errors are artificially tiny (~97.7% accuracy). When a genuinely new family arrives at test time, the router trusts the classifier far too often and violates its safety target.</li>
+</ul>
+
+<h3>1.3 Our Solution &amp; Scope of v0 vs. v1</h3>
+<p>We build a <b>Trust-Calibrated Cascade</b> where Stage 1 outputs probabilities and a <b>Class-Conditional (Mondrian) Conformal Router</b> &mdash; calibrated exclusively on <b>family-disjoint out-of-fold (OOF) predictions</b> &mdash; decides which predictions can be trusted immediately (<b>KEPT</b>) and which uncertain files must be sent to deeper dynamic analysis (<b>ESCALATED</b>).</p>
+<div class="box note">
+<b>Framing v0 vs. v1 (from our Implementation Spec):</b>
+<ul>
+  <li><b>In Scope for v0 (Completed in this Repo):</b> End-to-end family-disjoint data pipeline on the Sgandurra dataset (1,524 files, 30,967 binary features, 5 seeds); Stage-1 classifier comparison and upgrade (<span class="rf">Random Forest</span> &rarr; <span class="lr">Logistic Regression</span>); Family-aware OOF calibration vs. naive random-split calibration ablation; Asymmetric Mondrian Conformal Router (&alpha;<sub>benign</sub>=0.10, &alpha;<sub>ransom</sub> &in; {0.01, 0.02, 0.05, 0.10}); comparison against 4 baselines (Max-Softmax, Entropy, Credibility, Random); latency &amp; cost-proxy analysis.</li>
+  <li><b>Deferred to v1 (Next Stage):</b> (1) Training the Stage-2 dynamic classifier on Frida runtime features and connecting the full 2-stage decision; (2) ZRS autoencoder anomaly arm; (3) feature-space adversarial evasion test; (4) hybrid static+dynamic model; (5) temporal drift split.</li>
+</ul>
+</div>
+
+<h2>2. Final Methodology (and Evolution from Initial Spec to Final Code)</h2>
+
+<h3>2.1 How Our Implementation Evolved from the Nov 14 Plan</h3>
+<p>Keeping track of every design update for our research paper:</p>
+<table>
+<tr><th style="width:20%">Component</th><th style="width:37%">Initial Spec Plan (14 Nov 2026)</th><th>Final Implemented Repo (16&ndash;17 Nov 2026) &amp; Why</th></tr>
+<tr><td><b>Dataset</b></td><td>RansomTrack static features first; Sgandurra deferred to v1.</td><td><b>Sgandurra (EldeRan) dataset</b> (1,524 files, 30,967 binary behavioural features, 11 ransomware families) converted to sparse CSR format (<code>X_sparse.npz</code>, shrinking ~189 MB in memory to ~1.6 MB).</td></tr>
+<tr><td><b>Benign Family Grouping</b></td><td>Fallback: group benign files randomly if family labels are missing.</td><td>Built <b>20 balanced similarity clusters</b> (<code>benign_g00</code>..<code>benign_g19</code>) using <b>TruncatedSVD (50 components) + KMeans (k=20)</b> in <code>static/groups.py</code>, fixing an initial cosine clustering that put 804/942 benign files in one group.</td></tr>
+<tr><td><b>Split Protocol &amp; Seeds</b></td><td>20% test families; 3-fold inner CV (move to 5-fold in v1); seed 0 first, up to 5 seeds.</td><td>Upgraded directly to <b>25% test families</b> (3 of 11 ransomware families + 5 of 20 benign groups per seed), <b>5-fold inner CV</b> (<code>StratifiedGroupKFold(5)</code>), and completed <b>all 5 seeds (0 to 4)</b>.</td></tr>
+<tr><td><b>Feature Pipeline</b></td><td>Variance filter &rarr; <code>log1p</code> &rarr; <code>StandardScaler</code> &rarr; Mutual-Info top-k.</td><td>Only <code>VarianceThreshold(0.0)</code> (~19,285 active features kept). Because all 30,967 features are binary 0/1, <code>log1p</code> and scaling are unnecessary; 30k mutual-info tuning was skipped for speed.</td></tr>
+<tr><td><b>Stage-1 Classifier</b></td><td><span class="rf">Random Forest</span> (300 trees, <code>balanced_subsample</code>).</td><td>Upgraded primary model to <span class="lr">L2 Logistic Regression</span> (<code>C=1.0</code>, <code>class_weight='balanced'</code>, <code>liblinear</code>) after RF dropped to 75.2% on unseen-family OOF. RF is kept as a comparison baseline (<code>--model rf</code>).</td></tr>
+<tr><td><b>Stage-2 Trust Router</b></td><td>Mondrian Conformal Router (&alpha;<sub>b</sub>=0.10, &alpha;<sub>r</sub> &in; {0.01, 0.02, 0.05, 0.10}) + 4 baselines + group vs. random ablation.</td><td><b>Implemented 100% to spec</b> in <code>trust/</code>, verified by unit tests in <code>tests/test_conformal.py</code> and <code>tests/test_splits.py</code>.</td></tr>
+</table>
+
+<h3>2.2 Dataset &amp; Benign Pseudo-Family Clustering</h3>
+<div class="kpis">
+  <div class="kpi"><div class="big">1,524</div><div class="lbl">Total files</div></div>
+  <div class="kpi"><div class="big">942</div><div class="lbl">Benign files (20 groups)</div></div>
+  <div class="kpi"><div class="big">582</div><div class="lbl">Ransomware files (11 families)</div></div>
+  <div class="kpi"><div class="big">30,967</div><div class="lbl">Binary (0/1) features</div></div>
+  <div class="kpi"><div class="big">0.43%</div><div class="lbl">Non-zero entries (sparse)</div></div>
+</div>
+<ul>
+  <li><b>7 Feature Categories in <code>VariableNames.txt</code>:</b> Strings <code>STR</code> (16,267), Registry actions <code>REG</code> (6,622), File operations <code>FILES</code> (4,141), Directory enumerations <code>DIR</code> (2,424), File extensions <code>FILES_EXT</code> (935), Dropped files <code>DROP</code> (346), and Windows API calls <code>API</code> (232).</li>
+  <li><b>11 Ground-Truth Ransomware Families:</b> <code>ransom_f01</code> (50), <code>f02</code> (107), <code>f03</code> (46), <code>f04</code> (25), <code>f05</code> (64), <code>f06</code> (97), <code>f07</code> (59), <code>f08</code> (4), <code>f09</code> (90), <code>f10</code> (6), <code>f11</code> (34).</li>
+  <li><b>Why Benign Clustering Matters:</b> Ransomware samples have family IDs (1&ndash;11), but benign samples all have family ID 0. To prevent near-identical benign programs from leaking across splits, <code>static/groups.py</code> projects the benign feature matrix onto 50 SVD components and runs KMeans into <b>20 balanced benign groups</b>.</li>
+</ul>
+
+<h3>2.3 Zero-Day Family-Disjoint Splitting Protocol (<code>common/splits.py</code>)</h3>
+<ol>
+  <li><b>Outer Split (<code>outer_split</code>, per seed 0..4):</b> Holds out <b>25% of families</b> from each class &mdash; <b>3 ransomware families + 5 benign groups (8 families total, 302 to 479 files)</b> &mdash; as the unseen final-exam test set. The remaining ~75% of families (8 ransomware families + 15 benign groups, 1,045 to 1,222 files) form the development (<code>dev</code>) set.</li>
+  <li><b>Inner Family-Disjoint Calibration Folds (<code>inner_folds(..., mode='group')</code>):</b> Splits <code>dev</code> into <b>5 folds by family</b> using <code>StratifiedGroupKFold(5)</code>. Each fold is held out once and scored by a model trained on the other 4 folds. Thus, every <code>dev</code> file receives an <b>out-of-fold (OOF) probability score from a model that never saw its family</b>.</li>
+  <li><b>Inner Random-Split Ablation Folds (<code>inner_folds(..., mode='random')</code>):</b> Splits <code>dev</code> into 5 folds at random using <code>StratifiedKFold(5)</code>, where the same family appears in both training and validation. Saved strictly to prove why random-split calibration fails under family shift.</li>
+  <li><b>Leakage Verification (<code>check_splits</code> &amp; <code>validate_preds</code>):</b> Automated assertions verify zero family overlap between <code>dev</code> and <code>test</code>, zero family overlap inside every group fold, and valid probabilities summing to 1.0.</li>
+</ol>
+
+<h3>2.4 Stage-1 Base Classifier: Why We Moved from Random Forest to Logistic Regression</h3>
+<ul>
+  <li><b>Attempt 1 &mdash; Random Forest (<code>--model rf</code>):</b> <code>VarianceThreshold(0.0)</code> + <code>RandomForestClassifier(n_estimators=300, class_weight='balanced_subsample')</code>. On random splits it achieved <b>97.0%</b> accuracy, but on unseen families (family-wise OOF) it dropped by <b>21.8 points to 75.2% accuracy</b>, raised false alarms on <b>36.8%</b> of benign files, and had poorly calibrated probabilities (Brier 0.183). Because there are 30,967 features and only ~1,100 training files, decision trees memorised exact feature combinations specific to the training families.</li>
+  <li><b>Final Primary Model &mdash; L2 Logistic Regression (<code>--model lr</code>):</b> <code>VarianceThreshold(0.0)</code> + <code>LogisticRegression(C=1.0, max_iter=2000, class_weight='balanced', solver='liblinear')</code>. Selected using <b>only development OOF scores</b> (never touching test families). Instead of memorising narrow tree rules, it adds up small L2-regularised weights across all ~19,285 active behaviours. On unseen families (OOF), it boosted accuracy to <b>84.9% (+9.7 pts)</b>, cut false alarms to <b>21.3% (&minus;15.5 pts)</b>, raised AUC from <b>0.843 to 0.928</b>, improved Brier calibration to <b>0.125</b>, and ran <b>11&times; faster (1.95 ms vs. 21.55 ms per file)</b>.</li>
+</ul>
+
+<h3>2.5 Stage-2 Trust Layer: Mondrian Conformal Router (<code>trust/conformal.py</code>)</h3>
+<p>Instead of trusting a raw probability threshold like 0.5, the trust layer uses <b>Class-Conditional (Mondrian) Inductive Conformal Prediction</b> calibrated on the family-disjoint OOF scores of <code>dev</code>:</p>
+<ol>
+  <li><b>Nonconformity Score (How "strange" a file looks for class <i>c</i>):</b> For each file <i>x</i> and candidate class <i>c</i> &in; {0 (benign), 1 (ransomware)}, we define:
+    <div class="math">s<sub>c</sub>(x) = 1 &minus; p&#770;(y = c &mid; x)</div>
+    A low score means the Stage-1 model strongly believes the file belongs to class <i>c</i>; a high score means the file looks non-conforming (unusual) for class <i>c</i>.</li>
+  <li><b>Separate Per-Class Calibration Pools (Mondrian):</b> Using the family-disjoint OOF predictions on <code>dev</code>, we collect true-class nonconformity scores separately for real benign files (<i>c</i> = 0, size <i>n</i><sub>0</sub>) and real ransomware files (<i>c</i> = 1, size <i>n</i><sub>1</sub>). Keeping classes separate is critical so that class imbalance cannot distort the ransomware error rate.</li>
+  <li><b>Smoothed Conformal p-Value:</b> For a new test file <i>x</i>, its p-value for class <i>c</i> is the fraction of calibration files of class <i>c</i> that looked at least as strange as <i>x</i>:
+    <div class="math">p<sub>c</sub>(x) = [ #{ i : y<sub>i</sub> = c,  s<sub>i</sub> &ge; s<sub>c</sub>(x) } + 1 ] / (n<sub>c</sub> + 1)</div></li>
+  <li><b>Asymmetric Prediction Set &Gamma;(x):</b> We include class <i>c</i> in the prediction set &Gamma;(x) if its p-value exceeds the user-chosen error budget &alpha;<sub>c</sub>:
+    <div class="math">&Gamma;(x) = { c &in; {0, 1} : p<sub>c</sub>(x) &gt; &alpha;<sub>c</sub> }, &nbsp;&nbsp;with &alpha;<sub>benign</sub> = 0.10 &nbsp;and&nbsp; &alpha;<sub>ransom</sub> &in; {0.01, 0.02, 0.05, 0.10}</div>
+    <b>Why asymmetric (&alpha;<sub>ransom</sub> = 0.05 vs. &alpha;<sub>benign</sub> = 0.10)?</b> Silently missing a ransomware file (letting it run as benign) is far more dangerous than escalating a benign file. Under exchangeability between calibration and test families, &Gamma;(x) excludes the true ransomware label with probability at most &alpha;<sub>ransom</sub>.</li>
+  <li><b>Routing Rule (<code>route</code>):</b>
+    <ul>
+      <li><b>KEEP (Auto-Decide at Stage 1, Fast Path):</b> If <b>|&Gamma;(x)| = 1</b> (exactly one class is plausible: either <code>{0}</code> or <code>{1}</code>), we trust the prediction set's single label immediately.</li>
+      <li><b>ESCALATE (Send to Stage-2 Dynamic Sandbox, Slow Path):</b> If <b>|&Gamma;(x)| = 2</b> (both classes plausible &mdash; <i>ambiguous</i>) or <b>|&Gamma;(x)| = 0</b> (neither class plausible &mdash; <i>out-of-distribution / novel anomaly</i>), the static prediction is not trusted and the file is escalated to the dynamic sandbox.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3>2.6 Uncertainty Baselines Compared Against Conformal Routing (<code>trust/baselines.py</code>)</h3>
+<p>To make the comparison 100% fair, for each seed and each &alpha;<sub>ransom</sub> operating point, every baseline is forced to escalate the <b>exact same fraction of test files</b> (<code>escalate_at_rate</code>) as the Mondrian conformal router:</p>
+<ul>
+  <li><b>Max-Softmax (<code>u_maxsoft</code>):</b> <i>u(x) = 1 &minus; max<sub>c</sub> p&#770;(c &mid; x)</i>. Escalates files closest to the 0.5 boundary.</li>
+  <li><b>Shannon Entropy (<code>u_entropy</code>):</b> <i>u(x) = &minus;&sum;<sub>c</sub> p&#770;(c &mid; x) log p&#770;(c &mid; x)</i>. For binary classification, this is a monotonic function of Max-Softmax and produces identical rankings.</li>
+  <li><b>Conformal Credibility (<code>u_credibility</code>):</b> <i>u(x) = 1 &minus; max<sub>c</sub> p<sub>c</sub>(x)</i>. Escalates files whose best conformal p-value is lowest.</li>
+  <li><b>Random Escalation (<code>u_random</code>):</b> Escalates a uniform random subset of files at the same rate (lower-bound sanity check).</li>
+</ul>
+
+<h2>3. Working of the Code &amp; End-to-End Workflow Diagram</h2>
+
+<div class="arch">
+  <div style="text-align:center;font-weight:bold;color:#1e3a8a;font-size:10.5pt;margin-bottom:4px">End-to-End Repository Workflow &amp; Two-Person Handoff Architecture</div>
+  <div class="arch-row">
+    <div class="arch-box"><b>1. Raw Data (<code>data/raw/</code>)</b><br><code>RansomwareData.csv</code> (1,524 &times; 30,970) + <code>VariableNames.txt</code></div>
+    <div class="arch-box"><b>2. Master &amp; Sparse Builder</b><br><code>common/build_master.py</code> &rarr; <code>data/master.parquet</code><br><code>static/prepare_X.py</code> &rarr; <code>data/X_sparse.npz</code> (1.6 MB RAM)</div>
+    <div class="arch-box"><b>3. Benign Grouping &amp; Splits</b><br><code>static/groups.py</code> (SVD-50 + KMeans-20)<br><code>common/splits.py</code> (Outer 25% test families; Inner 5-fold Group &amp; Random CV)</div>
+  </div>
+  <div class="arch-arrow">&#8595;</div>
+  <div class="arch-row">
+    <div class="arch-box" style="border-color:#2563eb;background:#eff6ff">
+      <b>4. Stage 1: Base Classifier (<code>static/model.py</code>, <code>static/run_static.py</code> &mdash; Owner: Saisha)</b><br>
+      Runs for seeds 0..4 with <code>--model lr</code> (primary Logistic Regression) and <code>--model rf</code> (comparison Random Forest).<br>
+      Computes 5-fold family-disjoint OOF scores (<code>group, oof</code>), 5-fold random OOF scores (<code>random, oof</code>), and held-out unseen family predictions (<code>group, test</code>). Validated by <code>common/validate.py</code>.
+    </div>
+  </div>
+  <div class="arch-arrow">&#8595; &nbsp; <span style="font-size:9pt;color:#1f2937"><b>Handoff Contract:</b> <code>artifacts/preds_static_seed{0..4}.parquet</code> (Columns: <code>seed, cv_mode, role, sample_id, family, y, p_benign, p_ransom</code>)</span></div>
+  <div class="arch-row">
+    <div class="arch-box" style="border-color:#7c3aed;background:#f5f3ff">
+      <b>5. Stage 2: Mondrian Conformal Trust Router (<code>trust/conformal.py</code>, <code>trust/run_trust.py</code> &mdash; Owner: Lavanya)</b><br>
+      Calibrates class-conditional nonconformity scores on <code>dev</code> OOF &rarr; computes test p-values &rarr; builds prediction sets &Gamma;(x) at &alpha;<sub>b</sub>=0.10, &alpha;<sub>r</sub> &in; {0.01, 0.02, 0.05, 0.10}.<br>
+      <b>Decision:</b> If |&Gamma;(x)| = 1 &rarr; <b>KEEP (Fast Auto-Decision)</b>. If |&Gamma;(x)| &in; {0, 2} &rarr; <b>ESCALATE to Dynamic Sandbox (9.1 s)</b>.
+    </div>
+  </div>
+  <div class="arch-arrow">&#8595;</div>
+  <div class="arch-row">
+    <div class="arch-box"><b>6. Summaries &amp; Tables (<code>results/</code>)</b><br><code>static_runs.csv</code>, <code>static_summary.md</code>, <code>all_runs.csv</code>, <code>summary.csv</code>, <code>curves.csv</code></div>
+    <div class="arch-box"><b>7. Plots (<code>static/plots.py</code>, <code>trust/plots.py</code>)</b><br><code>static_*.png</code> (7 plots) + <code>fig1..3_*.png</code> (3 plots) + <code>docs/</code> explainers</div>
+    <div class="arch-box"><b>8. Automated Unit Tests (<code>tests/</code>)</b><br><code>test_splits.py</code> (zero family leakage)<br><code>test_conformal.py</code> (90% empirical coverage check)</div>
+  </div>
+</div>
+
+<h3>Complete File-by-File Map of the Repository</h3>
+<table>
+<tr><th style="width:28%">Folder / File</th><th>What It Does in the Codebase</th></tr>
+<tr><td><code>common/config.py</code></td><td>Global constants: <code>SEEDS = [0,1,2,3,4]</code>, <code>TEST_FRAC = 0.25</code>, <code>N_INNER = 5</code>, <code>N_BENIGN_GROUPS = 20</code>.</td></tr>
+<tr><td><code>common/build_master.py</code></td><td>Reads <code>RansomwareData.csv</code> and <code>VariableNames.txt</code>, deduplicates sample IDs, builds <code>data/master.parquet</code>.</td></tr>
+<tr><td><code>common/data.py</code></td><td>Helper <code>load_master()</code> returning the dataframe and <code>s_*</code> feature column list.</td></tr>
+<tr><td><code>common/splits.py</code></td><td><code>outer_split</code> (holds out 25% of families per class), <code>inner_folds</code> (5-fold group vs. random CV), and <code>check_splits</code>.</td></tr>
+<tr><td><code>common/validate.py</code></td><td><code>validate_preds(path)</code>: verifies schema, no NaNs, probabilities sum to 1, no duplicate IDs, and zero family leakage between OOF and test.</td></tr>
+<tr><td><code>static/prepare_X.py</code></td><td>Converts the 1,524 &times; 30,967 binary table into a compressed sparse row matrix <code>data/X_sparse.npz</code>.</td></tr>
+<tr><td><code>static/groups.py</code></td><td><code>regroup_benign</code>: runs <code>TruncatedSVD(50)</code> + <code>KMeans(20)</code> on benign files so family-wise CV has 20 balanced benign groups.</td></tr>
+<tr><td><code>static/model.py</code></td><td><code>make_static_model</code>: <code>VarianceThreshold(0.0)</code> + either L2 <code>LogisticRegression</code> (<code>kind='lr'</code>) or 300-tree <code>RandomForestClassifier</code> (<code>kind='rf'</code>).</td></tr>
+<tr><td><code>static/run_static.py</code></td><td>Runs the full Stage-1 experiment for a seed and model, measures single-thread inference latency over 100 test files, saves <code>artifacts/preds_static*.parquet</code> and <code>static_summary*.json</code>.</td></tr>
+<tr><td><code>static/summarize.py</code> &amp; <code>plots.py</code></td><td>Aggregates mean &plusmn; std across all 5 seeds into <code>results/static_runs.csv</code>, <code>results/static_summary.md</code>, and 7 <code>results/static_*.png</code> figures.</td></tr>
+<tr><td><code>trust/conformal.py</code></td><td>Core math: <code>cal_scores</code>, <code>pvalues</code>, <code>prediction_sets</code>, and <code>route</code> (keeps singletons, escalates empty/two-label sets).</td></tr>
+<tr><td><code>trust/baselines.py</code></td><td>Uncertainty scores (<code>u_maxsoft</code>, <code>u_entropy</code>, <code>u_credibility</code>, <code>u_random</code>) and <code>escalate_at_rate</code> (tie-broken with 10<sup>&minus;9</sup> jitter).</td></tr>
+<tr><td><code>trust/metrics.py</code></td><td>Computes <code>esc_rate</code>, <code>kept_acc</code>, <code>silent_miss</code>, <code>false_alarm_kept</code>, <code>err_caught</code>, <code>esc_precision</code>, <code>coverage</code>, and <code>err_auroc</code>.</td></tr>
+<tr><td><code>trust/run_trust.py</code> &amp; <code>plots.py</code></td><td>Evaluates conformal routing and baselines across all seeds, writes <code>results/all_runs.csv</code>, <code>summary.csv</code>, <code>curves.csv</code>, and <code>fig1..3_*.png</code>.</td></tr>
+<tr><td><code>tests/test_splits.py</code> &amp; <code>test_conformal.py</code></td><td><code>pytest</code> suite checking split disjointness across all 5 seeds and verifying empirical coverage on 4,000 exchangeable synthetic samples.</td></tr>
+</table>
+
+<h2>4. Complete Experimental Results (5 Seeds, Mean &plusmn; Std)</h2>
+
+<h3>4.1 Stage-1 Base Classifier Results: Logistic Regression vs. Random Forest</h3>
+<table>
+<tr><th>Evaluation Setting / Metric</th><th class="n rf">Random Forest (Old Baseline)</th><th class="n lr">Logistic Regression (Primary)</th><th class="n">Improvement (LR vs. RF)</th></tr>
+<tr><th colspan="4">1. Random-Split CV (Families Seen &mdash; "Cheating" Ablation)</th></tr>
+<tr><td>Accuracy</td><td class="n">97.0% &plusmn; 0.7%</td><td class="n win">97.7% &plusmn; 0.9%</td><td class="n">+0.7 pts</td></tr>
+<tr><td>Recall (Ransomware Caught)</td><td class="n">97.1% &plusmn; 1.2%</td><td class="n win">97.2% &plusmn; 1.5%</td><td class="n">+0.1 pts</td></tr>
+<tr><td>False-Positive Rate (False Alarms)</td><td class="n">3.2% &plusmn; 1.1%</td><td class="n win">2.0% &plusmn; 0.7%</td><td class="n">&minus;1.2 pts</td></tr>
+<tr><td>ROC-AUC</td><td class="n">0.996 &plusmn; 0.002</td><td class="n win">0.997 &plusmn; 0.001</td><td class="n">+0.001</td></tr>
+<tr><th colspan="4">2. Family-Wise OOF (Unseen Dev Families &mdash; Used for Model Selection &amp; Conformal Calibration)</th></tr>
+<tr><td>Accuracy</td><td class="n">75.2% &plusmn; 9.1%</td><td class="n win">84.9% &plusmn; 6.4%</td><td class="n"><b>+9.7 pts (Wins 5/5 seeds)</b></td></tr>
+<tr><td>Recall (Ransomware Caught)</td><td class="n">93.0% &plusmn; 5.1%</td><td class="n win">94.2% &plusmn; 5.1%</td><td class="n">+1.2 pts</td></tr>
+<tr><td>False-Positive Rate (False Alarms)</td><td class="n">36.8% &plusmn; 12.0%</td><td class="n win">21.3% &plusmn; 7.1%</td><td class="n"><b>&minus;15.5 pts (1,225 &rarr; 719 FPs)</b></td></tr>
+<tr><td>ROC-AUC</td><td class="n">0.843 &plusmn; 0.108</td><td class="n win">0.928 &plusmn; 0.051</td><td class="n"><b>+0.085 (Wins 5/5 seeds)</b></td></tr>
+<tr><td>Brier Calibration Error (lower = better)</td><td class="n">0.183 &plusmn; 0.063</td><td class="n win">0.125 &plusmn; 0.053</td><td class="n">&minus;0.058 (More honest scores)</td></tr>
+<tr><th colspan="4">3. Held-Out Test Families (Unseen Final Exam &mdash; 3 Ransomware Families + 5 Benign Groups per Seed)</th></tr>
+<tr><td>Accuracy</td><td class="n">78.7% &plusmn; 16.7%</td><td class="n win">82.1% &plusmn; 14.6%</td><td class="n">+3.4 pts (Wins 4/5 seeds)</td></tr>
+<tr><td>Recall (Ransomware Caught)</td><td class="n win">95.1% &plusmn; 2.9%</td><td class="n lose">92.7% &plusmn; 5.3%</td><td class="n">&minus;2.4 pts (RF missed 35; LR 53)</td></tr>
+<tr><td>False-Positive Rate (False Alarms)</td><td class="n">26.8% &plusmn; 24.5%</td><td class="n win">21.1% &plusmn; 22.9%</td><td class="n">&minus;5.7 pts (408 &rarr; 326 FPs)</td></tr>
+<tr><td>ROC-AUC</td><td class="n">0.862 &plusmn; 0.160</td><td class="n win">0.935 &plusmn; 0.083</td><td class="n"><b>+0.073 (Wins 5/5 seeds)</b></td></tr>
+<tr><td>Brier Calibration Error (lower = better)</td><td class="n">0.188 &plusmn; 0.142</td><td class="n win">0.150 &plusmn; 0.140</td><td class="n">&minus;0.038 (Wins 5/5 seeds)</td></tr>
+<tr><th colspan="4">4. Single-Thread Inference Latency (Model Only)</th></tr>
+<tr><td>Milliseconds per File</td><td class="n">21.55 ms</td><td class="n win">1.95 ms</td><td class="n"><b>11.0&times; faster</b></td></tr>
+</table>
+
+<div style="display:flex;gap:10px;align-items:flex-start;page-break-inside:avoid">
+  <figure style="flex:1.05"><img src="../static_v0/figures/fig_accuracy_by_setting.png"><figcaption><b>Figure 1.</b> Stage-1 accuracy across the 3 evaluation settings. Both models score ~97% when families leak across splits, but drop on unseen families. Logistic Regression cuts the unseen-family drop almost in half.</figcaption></figure>
+  <figure style="flex:0.95"><img src="../static_v0/figures/fig_roc.png"><figcaption><b>Figure 2.</b> Pooled ROC curves on unseen families (practice OOF and held-out test). Logistic Regression dominates Random Forest across the curve.</figcaption></figure>
+</div>
+
+<h3>4.2 Stage-2 Conformal Trust Router Results</h3>
+<div class="box warn">
+<b>Important Note on Repository Files:</b> In the git history, <code>results/all_runs.csv</code>, <code>results/summary.csv</code>, and <code>results/fig1..3_*.png</code> were committed at <code>17:29</code> on Nov 16 (commit <code>b24e0e1</code>), when <code>artifacts/preds_static_seed*.parquet</code> still held the <b>Random Forest</b> predictions. Later at <code>20:43</code> (commit <code>c449533</code>), <code>artifacts/preds_static_seed*.parquet</code> were updated to <b>Logistic Regression</b>. Below, we report <b>both</b> sets of Trust Router results (recomputed directly from the exact prediction files) so you have the complete picture!
+</div>
+
+<h4>A. Ablation 1: Family-Disjoint Calibration vs. Naive Random Calibration</h4>
+<p>Does calibrating on family-disjoint OOF scores preserve the target ransomware coverage (<i>1 &minus; &alpha;<sub>r</sub></i>) on unseen test families better than naive random-split OOF calibration?</p>
+<table>
+<tr><th rowspan="2">Target Ransomware Budget &alpha;<sub>r</sub></th><th rowspan="2" class="n">Nominal Target Coverage (1 &minus; &alpha;<sub>r</sub>)</th><th colspan="2" class="n lr">With Logistic Regression Stage 1</th><th colspan="2" class="n rf">With Random Forest Stage 1 (in <code>results/summary.csv</code>)</th></tr>
+<tr><th class="n">Family-Disjoint Calib (Ours)</th><th class="n">Naive Random Calib</th><th class="n">Family-Disjoint Calib (Ours)</th><th class="n">Naive Random Calib</th></tr>
+<tr><td class="n"><b>0.01</b></td><td class="n"><b>99.0%</b></td><td class="n win">100.0% &plusmn; 0.0%</td><td class="n lose">97.2% &plusmn; 2.3%</td><td class="n win">98.9% &plusmn; 1.2%</td><td class="n lose">98.3% &plusmn; 1.2%</td></tr>
+<tr><td class="n"><b>0.02</b></td><td class="n"><b>98.0%</b></td><td class="n win">98.0% &plusmn; 2.4%</td><td class="n lose">96.6% &plusmn; 2.3%</td><td class="n win">97.4% &plusmn; 2.2%</td><td class="n lose">97.2% &plusmn; 1.3%</td></tr>
+<tr><td class="n"><b>0.05 (Operating Pt)</b></td><td class="n"><b>95.0%</b></td><td class="n win">96.3% &plusmn; 2.9%</td><td class="n lose">90.6% &plusmn; 5.2%</td><td class="n win">95.4% &plusmn; 3.1%</td><td class="n lose">93.5% &plusmn; 2.4%</td></tr>
+<tr><td class="n"><b>0.10</b></td><td class="n"><b>90.0%</b></td><td class="n win">90.1% &plusmn; 7.0%</td><td class="n lose">84.2% &plusmn; 4.9%</td><td class="n win">94.0% &plusmn; 3.6%</td><td class="n lose">87.0% &plusmn; 2.4%</td></tr>
+<tr><td><b>Benign Coverage</b> (&alpha;<sub>b</sub>=0.10)</td><td class="n"><b>90.0%</b></td><td class="n win">83.2% &plusmn; 23.1%</td><td class="n lose">71.3% &plusmn; 26.2%</td><td class="n win">82.5% &plusmn; 24.3%</td><td class="n lose">61.3% &plusmn; 30.9%</td></tr>
+</table>
+
+<figure><img src="figures/fig_trust_coverage_both.png"><figcaption><b>Figure 3.</b> Conformal coverage validity under family shift. For both Logistic Regression (left) and Random Forest (right), <b>Family-Disjoint OOF Calibration (blue)</b> tracks or exceeds the dashed nominal target line (1 &minus; &alpha;<sub>r</sub>) across every risk budget, whereas <b>Naive Random Calibration (red)</b> consistently under-covers unseen families.</figcaption></figure>
+
+<h4>B. Mondrian Conformal Router Across Risk Budgets (&alpha;<sub>r</sub> Sweep, Family-Disjoint Calibration)</h4>
+<table>
+<tr><th>Stage-1 Model</th><th class="n">&alpha;<sub>ransom</sub></th><th class="n">Escalation Rate (to Dynamic Sandbox)</th><th class="n">Kept Accuracy (Auto-Decided)</th><th class="n">Silent-Miss Rate (Uncaught Ransomware)</th><th class="n">Stage-1 Errors Caught (%)</th><th class="n">Expected Time / File (Cost Proxy)</th></tr>
+<tr><td rowspan="4"><b class="lr">Logistic Regression (Primary)</b><br><span class="small">Base test acc: 82.1%<br>Latency: 1.95 ms</span></td>
+  <td class="n"><b>0.01</b></td><td class="n">27.0% &plusmn; 12.7%</td><td class="n">85.8% &plusmn; 19.2%</td><td class="n win"><b>0.0% &plusmn; 0.0%</b></td><td class="n">63.5% &plusmn; 48.0%</td><td class="n">2.46 s (3.7&times; faster)</td></tr>
+<tr><td class="n"><b>0.02</b></td><td class="n">17.3% &plusmn; 13.4%</td><td class="n">86.4% &plusmn; 16.5%</td><td class="n win"><b>2.0% &plusmn; 2.4%</b></td><td class="n">49.8% &plusmn; 44.6%</td><td class="n">1.58 s (5.8&times; faster)</td></tr>
+<tr><td class="n"><b>0.05*</b></td><td class="n win"><b>13.0% &plusmn; 11.9%</b></td><td class="n win"><b>86.0% &plusmn; 15.4%</b></td><td class="n win"><b>3.7% &plusmn; 2.9%</b></td><td class="n">34.8% &plusmn; 47.0%</td><td class="n win"><b>1.18 s (7.7&times; faster)</b></td></tr>
+<tr><td class="n"><b>0.10</b></td><td class="n">11.8% &plusmn; 7.2%</td><td class="n">84.9% &plusmn; 12.7%</td><td class="n">8.5% &plusmn; 8.2%</td><td class="n">28.8% &plusmn; 33.3%</td><td class="n">1.07 s (8.5&times; faster)</td></tr>
+<tr><td rowspan="4"><b class="rf">Random Forest (Old Baseline)</b><br><span class="small">Base test acc: 78.7%<br>Latency: 21.55 ms</span></td>
+  <td class="n"><b>0.01</b></td><td class="n">62.4% &plusmn; 43.7%</td><td class="n">54.4% &plusmn; 34.9%</td><td class="n">1.1% &plusmn; 1.2%</td><td class="n">56.5% &plusmn; 42.3%</td><td class="n">5.70 s (1.6&times; faster)</td></tr>
+<tr><td class="n"><b>0.02</b></td><td class="n">40.7% &plusmn; 29.0%</td><td class="n">83.3% &plusmn; 17.7%</td><td class="n">2.6% &plusmn; 2.2%</td><td class="n">42.3% &plusmn; 38.6%</td><td class="n">3.72 s (2.4&times; faster)</td></tr>
+<tr><td class="n"><b>0.05*</b></td><td class="n">27.8% &plusmn; 22.0%</td><td class="n">83.9% &plusmn; 16.3%</td><td class="n">4.6% &plusmn; 3.1%</td><td class="n">35.2% &plusmn; 39.6%</td><td class="n">2.56 s (3.6&times; faster)</td></tr>
+<tr><td class="n"><b>0.10</b></td><td class="n">24.5% &plusmn; 21.7%</td><td class="n">83.6% &plusmn; 16.5%</td><td class="n">6.0% &plusmn; 3.6%</td><td class="n">28.4% &plusmn; 36.2%</td><td class="n">2.25 s (4.0&times; faster)</td></tr>
+</table>
+<p class="small">*Pre-fixed primary operating point (&alpha;<sub>benign</sub> = 0.10, &alpha;<sub>ransom</sub> = 0.05). Notice how upgrading Stage 1 from Random Forest to Logistic Regression cuts the escalation rate more than in half (from 27.8% to 13.0% at &alpha;<sub>r</sub>=0.05, and from 62.4% to 27.0% at &alpha;<sub>r</sub>=0.01) while keeping silent misses below the target budget &alpha;<sub>r</sub>!</p>
+
+<figure><img src="figures/fig_trust_escalation_both.png"><figcaption><b>Figure 4.</b> Mondrian Conformal Router performance across risk budgets &alpha;<sub>r</sub>. With Logistic Regression (blue), the router escalates less than half as many files as with Random Forest (orange) while achieving higher accuracy on kept files and 0.0% silent misses at &alpha;<sub>r</sub> = 0.01.</figcaption></figure>
+
+<h4>C. Comparison Against Uncertainty Baselines at Matched Escalation Rates</h4>
+<p>At the strictest budget <b>&alpha;<sub>r</sub> = 0.01</b> (27.0% escalation on LR) and the nominal operating point <b>&alpha;<sub>r</sub> = 0.05</b> (13.0% escalation on LR, 27.8% on RF):</p>
+<table>
+<tr><th>Stage-1 Model &amp; Setting</th><th>Routing Method</th><th class="n">Escalation Rate</th><th class="n">Kept Accuracy</th><th class="n">Silent-Miss Rate</th><th class="n">Errors Caught</th><th class="n">Error-Detection AUROC</th></tr>
+<tr><td rowspan="5"><b class="lr">Logistic Regression</b><br>at &alpha;<sub>r</sub> = 0.01<br>(Strictest safety)</td>
+  <td><b>Mondrian Conformal (Ours)</b></td><td class="n">27.0%</td><td class="n">85.8%</td><td class="n win"><b>0.0%</b></td><td class="n">63.5%</td><td class="n"><i>Set-based router</i></td></tr>
+<tr><td>Conformal Credibility</td><td class="n">27.0%</td><td class="n win">88.7%</td><td class="n win"><b>0.0%</b></td><td class="n win">70.7%</td><td class="n win"><b>0.837 &plusmn; 0.106</b></td></tr>
+<tr><td>Max-Softmax (<i>1 &minus; max p</i>)</td><td class="n">27.0%</td><td class="n">87.7%</td><td class="n win"><b>0.0%</b></td><td class="n">67.9%</td><td class="n">0.814 &plusmn; 0.155</td></tr>
+<tr><td>Shannon Entropy</td><td class="n">27.0%</td><td class="n">87.7%</td><td class="n win"><b>0.0%</b></td><td class="n">67.9%</td><td class="n">0.814 &plusmn; 0.155</td></tr>
+<tr><td>Random Escalation</td><td class="n">27.0%</td><td class="n lose">82.0%</td><td class="n lose">4.8%</td><td class="n lose">24.0%</td><td class="n lose">0.483 &plusmn; 0.036</td></tr>
+<tr><td rowspan="5"><b class="lr">Logistic Regression</b><br>at &alpha;<sub>r</sub> = 0.05<br>(Nominal operating pt)</td>
+  <td><b>Mondrian Conformal (Ours)</b></td><td class="n">13.0%</td><td class="n win"><b>86.0%</b></td><td class="n">3.7% (&le; 5% target)</td><td class="n">34.8%</td><td class="n"><i>Set-based router</i></td></tr>
+<tr><td>Conformal Credibility</td><td class="n">13.0%</td><td class="n">85.8%</td><td class="n">2.1%</td><td class="n">50.2%</td><td class="n win"><b>0.837 &plusmn; 0.106</b></td></tr>
+<tr><td>Max-Softmax / Entropy</td><td class="n">13.0%</td><td class="n">85.8%</td><td class="n win">1.2%</td><td class="n win">54.1%</td><td class="n">0.814 &plusmn; 0.155</td></tr>
+<tr><td>Random Escalation</td><td class="n">13.0%</td><td class="n lose">81.8%</td><td class="n lose">6.2%</td><td class="n lose">10.2%</td><td class="n lose">0.483 &plusmn; 0.036</td></tr>
+<tr><td colspan="6" class="small"><i>Why does Max-Softmax have a slightly lower silent-miss rate at &alpha;<sub>r</sub>=0.05 when forced to escalate 13.0%?</i> Because Max-Softmax cannot choose <b>how many</b> files to escalate &mdash; it only works above because we <b>gave it the 13.0% escalation rate discovered by the Conformal Router</b>! Furthermore, across all thresholds, <b>Conformal Credibility achieves the highest Error-Detection AUROC (0.837 vs. 0.814 for Max-Softmax/Entropy)</b>.</td></tr>
+</table>
+
+<div style="display:flex;gap:10px;align-items:flex-start;page-break-inside:avoid">
+  <figure style="flex:1"><img src="figures/fig_trust_auroc_both.png"><figcaption><b>Figure 5.</b> Error-Detection AUROC on unseen test families. Upgrading Stage 1 from Random Forest to Logistic Regression boosts error detection from 0.604 to <b>0.837</b>, with <b>Conformal Credibility</b> beating Max-Softmax and Entropy under both models.</figcaption></figure>
+  <figure style="flex:1"><img src="figures/fig_cost_proxy.png"><figcaption><b>Figure 6.</b> Cost proxy: expected inspection time per file (<i>t<sub>static</sub> + esc_rate &times; 9.1s</i>). At &alpha;<sub>r</sub> = 0.05, the LR + Conformal cascade takes <b>1.18 s/file</b> vs. 9.10 s/file for full dynamic analysis (<b>87% time saved, 7.7&times; speedup</b>).</figcaption></figure>
+</div>
+
+<h2>5. Conclusions, Honest Caveats &amp; Roadmap to v1</h2>
+
+<h3>5.1 Four Key Conclusions</h3>
+<div class="box good">
+<ol style="margin:0">
+  <li><b>Random splits hide zero-day failure:</b> Both Random Forest (97.0%) and Logistic Regression (97.7%) look near-perfect under random CV, but drop by 13 to 22 percentage points when evaluated on unseen ransomware families. Family-disjoint evaluation is essential for honest zero-day research.</li>
+  <li><b>L2 Logistic Regression is a much stronger Stage-1 detector than Random Forest on wide binary behaviour data:</b> On unseen families, switching from RF to LR increased OOF accuracy from 75.2% to 84.9% (+9.7 pts, winning 5/5 seeds), reduced false alarms by 41%, improved test ROC-AUC from 0.862 to 0.935, reduced inference latency 11&times; (21.55 ms &rarr; 1.95 ms), and boosted downstream error-detection AUROC from 0.604 to 0.837.</li>
+  <li><b>Family-disjoint conformal calibration works under family shift; naive random calibration fails:</b> Calibrating the Mondrian router on family-disjoint OOF scores achieved <b>100.0%, 98.0%, 96.3%, and 90.1%</b> empirical ransomware coverage at target budgets of 99%, 98%, 95%, and 90% &mdash; satisfying the theoretical target at every single budget. Naive random-split calibration under-covered by up to 6 points on ransomware and 19&ndash;29 points on benign files.</li>
+  <li><b>Principled risk control vs. threshold heuristics:</b> Max-Softmax and Entropy require knowing the escalation rate in advance and offer no bound on silent misses. Mondrian Conformal Routing automatically sets the escalation rate from a user-chosen safety budget (&alpha;<sub>r</sub>) and, combined with Conformal Credibility, achieves the best error-detection ranking (AUROC <b>0.837</b>) while cutting expected sandbox cost by <b>87% (7.7&times; faster at &alpha;<sub>r</sub> = 0.05)</b>.</li>
+</ol>
+</div>
+
+<h3>5.2 Honest Caveats &amp; Limitations (To Mention Proactively)</h3>
+<ul>
+  <li><b>Behavioural features in Sgandurra:</b> Although our Stage-1 code is named <code>static/</code> (representing the fast, fixed first stage of the cascade), the Sgandurra dataset features were originally recorded from sandbox runs. In v1, we will pair pure static PE/Radare2 features with Frida dynamic features.</li>
+  <li><b>Constructed benign groups:</b> Because benign files lack ground-truth family labels, the 20 benign groups were created via SVD + KMeans similarity clustering.</li>
+  <li><b>High seed-to-seed variance (11 ransomware families):</b> With only 11 ransomware families (two of which have only 4 and 6 samples), holding out 3 families per seed causes test accuracy to vary from 66.1% to 95.7% depending on which families land in test. Reporting 5-seed mean &plusmn; std makes this variance transparent.</li>
+  <li><b>Syncing <code>results/summary.csv</code>:</b> As noted in Section 4.2, the committed <code>results/summary.csv</code> reflects the Random Forest run from commit <code>b24e0e1</code>; re-running <code>python -m trust.run_trust</code> and <code>python -m trust.plots</code> updates <code>results/</code> to the Logistic Regression numbers shown in Table 4.2 above.</li>
+</ul>
+
+<h3>5.3 Exact Commands to Reproduce the Entire Repository</h3>
+<ol class="small" style="font-size:9.3pt">
+  <li><code>python -m common.build_master</code> &mdash; builds <code>data/master.parquet</code> from <code>data/raw/</code>.</li>
+  <li><code>python -m static.prepare_X</code> &mdash; builds sparse matrix <code>data/X_sparse.npz</code>.</li>
+  <li><code>python -m static.run_static --seed 0</code> (repeat for seeds 1..4; add <code>--model rf</code> for the Random Forest baseline).</li>
+  <li><code>python -m static.summarize</code> &amp; <code>python -m static.plots</code> &mdash; writes Stage-1 tables and plots in <code>results/</code>.</li>
+  <li><code>python -m trust.run_trust</code> &amp; <code>python -m trust.plots</code> &mdash; runs the Mondrian Conformal Router and baselines, writing <code>results/all_runs.csv</code>, <code>summary.csv</code>, <code>curves.csv</code>, and <code>fig1..3_*.png</code>.</li>
+  <li><code>pytest</code> &mdash; runs <code>tests/test_splits.py</code> and <code>tests/test_conformal.py</code>.</li>
+</ol>
+
+<h3>5.4 Roadmap to v1 (Next Steps for the Research Paper)</h3>
+<table>
+<tr><th style="width:22%">Milestone</th><th>Planned Work</th></tr>
+<tr><td><b>1. Stage-2 Dynamic Classifier</b></td><td>Train the dynamic classifier on runtime features for escalated samples and compute true end-to-end 2-stage cascade accuracy and recall.</td></tr>
+<tr><td><b>2. ZRS Autoencoder Arm</b></td><td>Add a zero-shot reconstruction-error anomaly arm alongside conformal p-values to catch completely out-of-distribution empty sets (|&Gamma;(x)| = 0).</td></tr>
+<tr><td><b>3. Adversarial Evasion Test</b></td><td>Inject benign features into ransomware test vectors (feature-space evasion) and verify that the conformal router escalates evasive samples when Stage-1 confidence degrades.</td></tr>
+<tr><td><b>4. Temporal Drift Split</b></td><td>Evaluate on timestamp-ordered splits in addition to family-disjoint splits to measure multi-year concept drift directly.</td></tr>
+</table>
+
+</body>
+</html>
